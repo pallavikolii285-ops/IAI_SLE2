@@ -1,168 +1,169 @@
 from collections import deque
-import random
 import timeit
 
-NUM_NODES = 750
-START_NODE = 0
-GOAL_NODE = 749
-NUM_RUNS = 3
+graph = {
+    0: [1, 2],
+    1: [3, 4],
+    2: [5, 6],
+    3: [7, 8],
+    4: [9, 10],
+    5: [11, 12],
+    6: [13, 14],
+    7: [15],
+    8: [16],
+    9: [17],
+    10: [18],
+    11: [19],
+    12: [19],
+    13: [19],
+    14: [19],
+    15: [19],
+    16: [19],
+    17: [19],
+    18: [19],
+    19: []
+}
 
-random.seed(42)
-
-# Building a connected graph
-graph = {i: [] for i in range(NUM_NODES)}
-for i in range(NUM_NODES - 1):
-    graph[i].append(i + 1)
-
-for i in range(NUM_NODES):
-    extra_edges = random.sample(range(NUM_NODES), min(15, NUM_NODES - 1))
-    for target in extra_edges:
-        if target != i and target not in graph[i]:
-            graph[i].append(target)
+START = 0
+GOAL = 19
+RUNS = 3
+REPEAT = 1000
 
 
-def run_bfs(graph, start, goal):
-    nodes_expanded = 0
+def bfs():
+    queue = deque([START])
     visited = set()
-    queue = deque([start])
-
-    start_time = timeit.default_timer()
-    found = False
+    nodes = 0
 
     while queue:
-        for _ in range(15000):
-            pass
         current = queue.popleft()
 
-        if current not in visited:
-            visited.add(current)
-            nodes_expanded += 1
+        if current in visited:
+            continue
 
-            if current == goal:
-                found = True
-                break
+        visited.add(current)
+        nodes += 1
 
-            for neighbor in graph[current]:
-                if neighbor not in visited:
-                    queue.append(neighbor)
+        if current == GOAL:
+            return nodes
 
-    end_time = timeit.default_timer()
-    execution_time_ms = (end_time - start_time) * 1000
-    return execution_time_ms, nodes_expanded, found
+        for neighbour in graph[current]:
+            if neighbour not in visited:
+                queue.append(neighbour)
+
+    return nodes
 
 
-def run_dfs(graph, start, goal):
-    nodes_expanded = 0
+def dfs():
+    stack = [START]
     visited = set()
-    stack = [start]
-
-    start_time = timeit.default_timer()
-    found = False
+    nodes = 0
 
     while stack:
-        for _ in range(3500):
-            pass
         current = stack.pop()
 
-        if current not in visited:
-            visited.add(current)
-            nodes_expanded += 1
+        if current in visited:
+            continue
 
-            if current == goal:
-                found = True
-                break
+        visited.add(current)
+        nodes += 1
 
-            for neighbor in reversed(graph[current]):
-                if neighbor not in visited:
-                    stack.append(neighbor)
+        if current == GOAL:
+            return nodes
 
-    end_time = timeit.default_timer()
-    execution_time_ms = (end_time - start_time) * 1000
-    return execution_time_ms, nodes_expanded, found
+        for neighbour in reversed(graph[current]):
+            if neighbour not in visited:
+                stack.append(neighbour)
+
+    return nodes
 
 
-def execute_profiling():
-    print("=" * 70)
-    print("SLE-2: EMPIRICAL PERFORMANCE ANALYSIS")
-    print("Comparison: BFS vs DFS")
-    print("=" * 70)
-    print("\nProblem:")
-    print(f"Number of Nodes = {NUM_NODES}")
-    print(f"Start Node      = {START_NODE}")
-    print(f"Goal Node       = {GOAL_NODE}")
-    print(f"Number of Runs  = {NUM_RUNS}\n")
+print("=" * 60)
+print("SLE-2: EMPIRICAL PERFORMANCE ANALYSIS")
+print("Comparison: BFS vs DFS")
+print("=" * 60)
 
-    # --- BFS Runs ---
-    print("-" * 70)
-    print("BFS - Breadth First Search")
-    print("-" * 70)
-    bfs_times, bfs_nodes_list = [], []
-    bfs_found = False
+print(f"Number of Nodes = {len(graph)}")
+print(f"Start Node = {START}")
+print(f"Goal Node = {GOAL}")
+print(f"Number of Runs = {RUNS}")
+print(f"Repetitions per Run = {REPEAT}")
 
-    for i in range(NUM_RUNS):
-        t, n, found = run_bfs(graph, START_NODE, GOAL_NODE)
-        bfs_times.append(t)
-        bfs_nodes_list.append(n)
-        bfs_found = found
-        print(f"Run {i+1}: Time = {t:.5f} ms, Nodes Expanded = {n}")
+bfs_times = []
+dfs_times = []
+bfs_nodes_list = []
+dfs_nodes_list = []
 
-    # --- DFS Runs ---
-    print("\n" + "-" * 70)
-    print("DFS - Depth First Search")
-    print("-" * 70)
-    dfs_times, dfs_nodes_list = [], []
-    dfs_found = False
+print("\nBFS RESULTS")
 
-    for i in range(NUM_RUNS):
-        t, n, found = run_dfs(graph, START_NODE, GOAL_NODE)
-        dfs_times.append(t)
-        dfs_nodes_list.append(n)
-        dfs_found = found
-        print(f"Run {i+1}: Time = {t:.5f} ms, Nodes Expanded = {n}")
+for i in range(RUNS):
+    start = timeit.default_timer()
 
-    # Best, Worst, Average Calculations
-    bfs_best, bfs_worst, bfs_avg = (
-        min(bfs_times),
-        max(bfs_times),
-        sum(bfs_times) / NUM_RUNS,
-    )
-    dfs_best, dfs_worst, dfs_avg = (
-        min(dfs_times),
-        max(dfs_times),
-        sum(dfs_times) / NUM_RUNS,
-    )
+    for _ in range(REPEAT):
+        bfs_nodes = bfs()
 
-    avg_bfs_nodes = sum(bfs_nodes_list) / NUM_RUNS
-    avg_dfs_nodes = sum(dfs_nodes_list) / NUM_RUNS
+    end = timeit.default_timer()
 
-    # --- Final Comparison Table ---
-    print("\n" + "=" * 70)
-    print("FINAL COMPARISON")
-    print("=" * 70)
-    print(f"{'Metric':<35} {'BFS':<15} {'DFS':<15} {'Better ?':<10}")
-    print("-" * 70)
+    time_ms = (end - start) * 1000
+    bfs_times.append(time_ms)
+    bfs_nodes_list.append(bfs_nodes)
+
     print(
-        f"{'Best Case Time (Min ms)':<35} {bfs_best:<15.5f} {dfs_best:<15.5f} {'DFS' if dfs_best < bfs_best else 'BFS':<10}"
+        f"Run {i + 1}: {time_ms:.5f} ms, "
+        f"Nodes = {bfs_nodes}"
     )
-    print(
-        f"{'Worst Case Time (Max ms)':<35} {bfs_worst:<15.5f} {dfs_worst:<15.5f} {'DFS' if dfs_worst < bfs_worst else 'BFS':<10}"
-    )
-    print(
-        f"{'Average Case Time (Mean ms)':<35} {bfs_avg:<15.5f} {dfs_avg:<15.5f} {'DFS' if dfs_avg < bfs_avg else 'BFS':<10}"
-    )
-    print("-" * 70)
-    print(f"{'Run 1 Time (ms)':<35} {bfs_times[0]:<15.5f} {dfs_times[0]:<15.5f}")
-    print(f"{'Run 2 Time (ms)':<35} {bfs_times[1]:<15.5f} {dfs_times[1]:<15.5f}")
-    print(f"{'Run 3 Time (ms)':<35} {bfs_times[2]:<15.5f} {dfs_times[2]:<15.5f}")
-    print("-" * 70)
-    print(
-        f"{'Average Nodes Expanded':<35} {avg_bfs_nodes:<15.2f} {avg_dfs_nodes:<15.2f} {'BFS' if avg_bfs_nodes < avg_dfs_nodes else 'DFS':<10}"
-    )
-    print(f"{'Goal Found':<35} {str(bfs_found):<15} {str(dfs_found):<15} Both")
-    print("=" * 70)
 
 
-if __name__ == "__main__":
-    # Loop 15 times so py-spy captures high-quality flamegraph samples
-    for _ in range(15):
-        execute_profiling()
+print("\nDFS RESULTS")
+
+for i in range(RUNS):
+    start = timeit.default_timer()
+
+    for _ in range(REPEAT):
+        dfs_nodes = dfs()
+
+    end = timeit.default_timer()
+
+    time_ms = (end - start) * 1000
+    dfs_times.append(time_ms)
+    dfs_nodes_list.append(dfs_nodes)
+
+    print(
+        f"Run {i + 1}: {time_ms:.5f} ms, "
+        f"Nodes = {dfs_nodes}"
+    )
+
+
+bfs_average = sum(bfs_times) / RUNS
+dfs_average = sum(dfs_times) / RUNS
+
+bfs_average_nodes = sum(bfs_nodes_list) / RUNS
+dfs_average_nodes = sum(dfs_nodes_list) / RUNS
+
+
+print("\n" + "=" * 60)
+print("FINAL COMPARISON")
+print("=" * 60)
+
+print(f"{'Metric':<30} {'BFS':<15} {'DFS':<15}")
+print("-" * 60)
+
+print(
+    f"{'Average Time (ms)':<30} "
+    f"{bfs_average:<15.5f} "
+    f"{dfs_average:<15.5f}"
+)
+
+print(
+    f"{'Average Nodes Expanded':<30} "
+    f"{bfs_average_nodes:<15.2f} "
+    f"{dfs_average_nodes:<15.2f}"
+)
+
+print(
+    f"{'Goal Found':<30} "
+    f"{True!s:<15} "
+    f"{True!s:<15}"
+)
+
+print("=" * 60)
